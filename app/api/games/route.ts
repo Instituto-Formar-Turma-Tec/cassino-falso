@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { initializeDatabase } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { playSlot, playAnimal, playBoard, playRoulette, playBlackjack, playPoker } from '@/lib/game-engine';
-initializeDatabase();
 
 export async function POST(req: Request) {
   try {
@@ -20,22 +18,22 @@ export async function POST(req: Request) {
     let result: any;
     switch (body.game) {
       case 'slot':
-        result = playSlot(user.id, bet);
+        result = await playSlot(user.id, bet);
         break;
       case 'animal':
-        result = playAnimal(user.id, bet, String(body.animal || 'Avestruz'));
+        result = await playAnimal(user.id, bet, String(body.animal || 'Avestruz'));
         break;
       case 'board':
-        result = playBoard(user.id, bet);
+        result = await playBoard(user.id, bet);
         break;
       case 'roulette':
-        result = playRoulette(user.id, bet, String(body.betType) as any, body.value ? Number(body.value) : undefined);
+        result = await playRoulette(user.id, bet, String(body.betType) as any, body.value ? Number(body.value) : undefined);
         break;
       case 'blackjack':
-        result = playBlackjack(user.id, bet);
+        result = await playBlackjack(user.id, bet);
         break;
       case 'poker':
-        result = playPoker(user.id, bet);
+        result = await playPoker(user.id, bet);
         break;
       default:
         return NextResponse.json({ error: 'Jogo não encontrado.' }, { status: 400 });
@@ -43,6 +41,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Erro ao resolver rodada.' }, { status: 400 });
+    // resolver_jogada no Postgres levanta exceção → PostgREST devolve
+    // { code: 'PGRST...', message: '...' }. Priorizamos a mensagem do banco.
+    const msg = e?.details?.message || e?.message || 'Erro ao resolver rodada.';
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

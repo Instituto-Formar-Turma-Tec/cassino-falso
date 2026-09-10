@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Trophy } from 'lucide-react';
 import { formatBRL } from '@/lib/utils-data';
-import { playRoulette } from '@/lib/game-engine';
 
 export default function GameRoulette({ onPlay, busy, balance }: {
   onPlay: (data: { game: 'roulette'; betType: string; value?: number }) => void;

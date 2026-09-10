@@ -20,3 +20,10 @@ node_modules
 # OS files
 *.log
 *.tmp
+
+# AI agent auto-generated rules
+AGENTS.md
+CLAUDE.md
+
+# Seed script local (contém URL, sem secrets)
+scripts/*.tmp.sh

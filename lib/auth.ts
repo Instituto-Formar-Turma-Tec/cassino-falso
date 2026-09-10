@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
-import db from './db';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
+import { supabase } from './supabase';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'dev-secret-key-change-in-production'
@@ -31,27 +31,35 @@ export async function createSession(userId: string): Promise<string> {
   const sessionId = randomBytes(32).toString('hex');
   const expiresAt = Date.now() + SESSION_DURATION_MS;
 
-  const stmt = db.prepare(
-    'INSERT INTO sessions (id, user_id, expira_em, criado_em) VALUES (?, ?, ?, ?)'
-  );
-  stmt.run(sessionId, userId, expiresAt, Date.now());
+  const { error } = await supabase
+    .from('sessions')
+    .insert({ id: sessionId, user_id: userId, expira_em: expiresAt, criado_em: Date.now() });
 
+  if (error) throw new Error(error.message);
   return sessionId;
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  const stmt = db.prepare('DELETE FROM sessions WHERE id = ?');
-  stmt.run(sessionId);
+  await supabase.from('sessions').delete().eq('id', sessionId);
 }
 
 export async function getSessionUser(sessionId: string): Promise<any | null> {
-  const stmt = db.prepare(`
-    SELECT u.* FROM users u
-    INNER JOIN sessions s ON s.user_id = u.id
-    WHERE s.id = ? AND s.expira_em > ?
-    LIMIT 1
-  `);
-  return stmt.get(sessionId, Date.now()) || null;
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('user_id, expira_em')
+    .eq('id', sessionId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  if (data.expira_em <= Date.now()) return null;
+
+  const { data: user } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', data.user_id)
+    .maybeSingle();
+
+  return user || null;
 }
 
 export async function setSessionCookie(sessionId: string): Promise<void> {
@@ -94,29 +102,42 @@ export async function getCurrentUser(): Promise<SessionData | null> {
   }
 }
 
-export function getUserById(userId: string): any | null {
-  const stmt = db.prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
-  return stmt.get(userId) || null;
+export async function getUserById(userId: string): Promise<any | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+  return data || null;
 }
 
-export function getUserByMatricula(matricula: string): any | null {
-  const stmt = db.prepare('SELECT * FROM users WHERE matricula = ? LIMIT 1');
-  return stmt.get(matricula) || null;
+export async function getUserByMatricula(matricula: string): Promise<any | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('matricula', matricula)
+    .maybeSingle();
+  return data || null;
 }
 
-export function createUser(
+export async function createUser(
   nome: string,
   matricula: string,
   senhaHash: string
-): string {
-  const userId = randomBytes(16).toString('hex');
+): Promise<string> {
+  const userId = randomUUID();
   const now = Date.now();
 
-  const stmt = db.prepare(
-    `INSERT INTO users (id, nome, matricula, senha_hash, saldo_centavos, criado_em, atualizado_em)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  );
-  stmt.run(userId, nome, matricula, senhaHash, 100000, now, now);
+  const { error } = await supabase.from('users').insert({
+    id: userId,
+    nome,
+    matricula,
+    senha_hash: senhaHash,
+    saldo_centavos: 100000,
+    criado_em: now,
+    atualizado_em: now,
+  });
 
+  if (error) throw new Error(error.message);
   return userId;
 }

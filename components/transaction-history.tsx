@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 export async function TransactionHistory() {
   const cookieStore = await cookies();
@@ -11,11 +11,14 @@ export async function TransactionHistory() {
   const user = await getSessionUser(sessionId);
   if (!user) return null;
 
-  const transactions = db.prepare(
-    'SELECT * FROM transactions WHERE user_id = ? ORDER BY criado_em DESC LIMIT 20'
-  ).all(user.id) as any[];
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('criado_em', { ascending: false })
+    .limit(20);
 
-  if (transactions.length === 0) {
+  if (error || !transactions || transactions.length === 0) {
     return (
       <div className="premium-card rounded-xl p-5 mb-6">
         <h2 className="font-mono text-lg font-bold text-gold mb-4">📊 Extrato</h2>
@@ -30,7 +33,7 @@ export async function TransactionHistory() {
         <span>💰</span> Extrato de Apostas
       </h2>
       <div className="space-y-2 max-h-80 overflow-y-auto">
-        {transactions.map(t => (
+        {transactions.map((t: any) => (
           <div key={t.id} className="flex items-center justify-between text-sm py-2 border-b border-gold/10">
             <div className="flex items-center gap-2">
               <span className={`font-mono ${t.tipo === 'resultado' ? 'text-green-400' : 'text-red-400'}`}>

@@ -1,0 +1,33 @@
+=====================================================
+  DADOS DE TESTE — CASSINO REVERSO (Supabase)
+  Projeto: upqsfmkxywegjbolqcqs
+  Senha compartilhada: Teste@123
+=====================================================
+
+Usuários disponíveis (matrícula / nome):
+
+  20260001  Ana Souza
+  20260002  Bruno Lima
+  20260003  Carla Mendes
+  20260004  Diego Rocha
+  20260005  Elisa Castro
+  20260006  Felipe Nunes
+  20260007  Gabriela Reis
+  20260008  Henrique Pires
+  20260009  Isabela Tavares
+  20260010  João Vieira
+  20260011  Larissa Melo
+  20260012  Marcos Teixeira
+
+  + usuário de teste inicial: matrícula MIG001 / nome "Teste Migração"
+
+TODOS usam a senha:  Teste@123
+
+-----------------------------------------------------
+  O que existe no banco:
+  - 12 usuários com saldos finais variados (~R$ 320–1050)
+  - Histórico de rounds e transactions coerente (saldo_antes → saldo_depois)
+  - Leaderboard e snapshot funcionando
+
+  Para entrar: matricula + Teste@123 no app.
+=====================================================

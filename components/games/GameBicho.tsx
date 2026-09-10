@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { formatBRL } from '@/lib/utils-data';
-import { ANIMALS } from '@/lib/utils-data';
+import { ANIMALS, ANIMAL_EMOJIS } from '@/lib/utils-data';
 
 interface Props {
   onPlay: (animal: string) => void;
@@ -42,16 +42,16 @@ export default function GameBicho({ onPlay, busy, balance, onWin, onLoss }: Prop
       <div className="grid grid-cols-5 gap-2 max-w-md w-full">
         {ANIMALS.map(a => (
           <button
-            key={a.id}
-            onClick={() => handlePick(a.id)}
+            key={a}
+            onClick={() => handlePick(a)}
             disabled={busy || picking}
             className={`animal-card p-2 text-center transition-all ${
-              selected === a.id ? 'selected border-gold border-2' : ''
+              selected === a ? 'selected border-gold border-2' : ''
             } ${busy || picking ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <span className="text-xl block mb-1">{a.emoji}</span>
+            <span className="text-xl block mb-1">{ANIMAL_EMOJIS[a]}</span>
             <span className="text-xs font-mono text-muted-foreground">
-              {a.id.slice(0, 3)}
+              {a.slice(0, 3)}
             </span>
           </button>
         ))}
