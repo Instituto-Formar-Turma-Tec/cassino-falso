@@ -13,8 +13,11 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
   colorScheme: 'dark',
-  themeColor: '#1a1a1a',
+  themeColor: '#050505',
 }
 
 export default function RootLayout({
@@ -24,8 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className="antialiased">
-        {children}
+      <body className="antialiased app-background">
+        <main className="mobile-app" role="main">
+          {children}
+        </main>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
