@@ -10,6 +10,7 @@ import GameBoard from '@/components/games/GameBoard';
 import GameRoulette from '@/components/games/GameRoulette';
 import GameBlackjack from '@/components/games/GameBlackjack';
 import GamePoker from '@/components/games/GamePoker';
+import { CasoRealCard } from '@/components/layout/CasoRealCard';
 
 export default function Home() {
   const {
@@ -139,10 +140,11 @@ export default function Home() {
       <main className="flex-1 pb-[140px]">
         <div className="px-4 py-4">
           {activeGame ? (
-            <div className="game-container">
-              {renderGame()}
-            </div>
-          ) : (
+                      <div className="game-container">
+                        <CasoRealCard key={activeGame} />
+                        {renderGame()}
+                      </div>
+                    ) : (
             <GameSelection
               snapshot={snapshot}
               onGameSelect={handleGameSelect}
