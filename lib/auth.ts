@@ -4,9 +4,17 @@ import bcrypt from 'bcryptjs';
 import { randomBytes, randomUUID } from 'crypto';
 import { supabase } from './supabase';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'dev-secret-key-change-in-production'
-);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET não configurado. Defina uma chave aleatória forte em .env.local (ver .env.example) — nunca use o valor de desenvolvimento em produção.'
+    );
+  }
+  return new TextEncoder().encode(secret);
+}
+
+const JWT_SECRET = getJwtSecret();
 
 const SESSION_COOKIE_NAME = 'cassino_session';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 horas
