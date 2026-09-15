@@ -1,7 +1,7 @@
 'use client';
 
 import { Trophy, Crown, Medal } from 'lucide-react';
-import { Leader } from '@/app/page';
+import type { Leader } from '@/components/layout/AppProvider';
 
 interface Props {
   leaders: Leader[];

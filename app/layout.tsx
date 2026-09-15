@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { AppProvider } from '@/components/layout/AppProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -28,11 +29,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark">
       <body className="antialiased app-background">
-        <main className="mobile-app" role="main">
-          {children}
-        </main>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
-      </body>
+              <AppProvider>
+                {children}
+              </AppProvider>
+              {process.env.NODE_ENV === 'production' && <Analytics />}
+            </body>
     </html>
   )
 }
