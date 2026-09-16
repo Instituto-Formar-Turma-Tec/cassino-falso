@@ -67,7 +67,7 @@ export default function StakeSelector({ selectedStake, onSelectStake }: StakeSel
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
         {STAKE_OPTIONS.map((opt) => {
           const isSelected = selectedStake === opt.id
           return (

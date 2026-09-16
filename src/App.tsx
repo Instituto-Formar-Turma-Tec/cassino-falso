@@ -1374,7 +1374,7 @@ function Sidebar({
   ]
   return (
     <aside
-      className="w-64 min-h-screen flex-shrink-0 relative z-10 flex flex-col"
+      className="hidden md:flex w-64 min-h-screen flex-shrink-0 relative z-10 flex-col"
       style={{
         background: "linear-gradient(180deg,#0a0300 0%,#060200 100%)",
         borderRight: "1px solid #2a1000",
@@ -1543,30 +1543,34 @@ function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.9)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
+      style={{ background: "rgba(0,0,0,0.95)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       <div
-        className="game-card rounded-2xl p-6 max-w-lg w-full gold-border-anim"
-        style={{ maxHeight: "90vh", overflowY: "auto" }}
+        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 gold-border-anim flex flex-col overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-casino text-3xl neon-gold text-yellow-400 tracking-wider">
-              {game.nome}
-            </h2>
-            <p className="text-yellow-800 text-xs font-display mt-0.5">
-              {game.descricao}
-            </p>
+        {/* Header fixo no topo no mobile */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-yellow-800/40 sticky top-0 bg-gray-950/95 backdrop-blur-md z-20 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl">{game.emoji}</span>
+            <div>
+              <h2 className="font-casino text-2xl sm:text-3xl neon-gold text-yellow-400 tracking-wider">
+                {game.nome}
+              </h2>
+              <p className="text-yellow-700 text-[11px] sm:text-xs font-display line-clamp-1">
+                {game.descricao}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="text-yellow-700 hover:text-yellow-400 text-2xl transition-colors"
+            className="btn-red px-3 py-1.5 rounded-xl text-xs tracking-wider uppercase font-bold flex items-center gap-1 shadow-md hover:scale-105 transition-transform"
+            title="Fechar Jogo"
           >
-            ✕
+            <span>✕</span>
+            <span className="hidden sm:inline">Fechar</span>
           </button>
         </div>
 
