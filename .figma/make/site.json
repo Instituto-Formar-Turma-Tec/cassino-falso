@@ -1,0 +1,10 @@
+{
+  "description": "Offers an engaging betting platform with casino games and user features designed to educate and highlight risks of gambling in Brazil.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
