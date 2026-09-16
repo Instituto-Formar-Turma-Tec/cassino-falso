@@ -37,6 +37,12 @@ export const DEPOSIT_IMPACT_QUOTES: ImpactQuote[] = [
     depoimento:
       "Depósitos impulsivos acionam o mesmo circuito de dependência química da cocaína no cérebro. O aplicativo foi desenhado por engenheiros para transformar o ato de depositar em um gatilho incontrolável de ansiedade.",
   },
+  {
+    autor: "Relato Real — Servidor Público (45 anos)",
+    contexto: "Empréstimo no Cartão de Crédito",
+    depoimento:
+      "Usei o cartão de crédito para fazer um PIX de R$ 2.000 para a casa de aposta. Não consegui pagar a fatura e os juros de 440% ao ano transformaram minha dívida em R$ 28 mil em poucos meses.",
+  },
 ]
 
 export const WIN_IMPACT_QUOTES: ImpactQuote[] = [
@@ -69,4 +75,42 @@ export const WIN_IMPACT_QUOTES: ImpactQuote[] = [
 export function getRandomQuote(quotes: ImpactQuote[]): ImpactQuote {
   const idx = Math.floor(Math.random() * quotes.length)
   return quotes[idx]
+}
+
+export function getEquivalenciaFinanceira(valorReais: number): {
+  item: string
+  emoji: string
+  descricao: string
+} {
+  if (valorReais <= 50) {
+    return {
+      item: "Cesta Básica Familiar (semanal)",
+      emoji: "🛒",
+      descricao: "Alimentação essencial para uma família por dias.",
+    }
+  } else if (valorReais <= 150) {
+    return {
+      item: "Conta de Luz ou Água",
+      emoji: "💡",
+      descricao: "Garante serviços fundamentais da residência.",
+    }
+  } else if (valorReais <= 500) {
+    return {
+      item: "Aluguel ou Prestação Residencial",
+      emoji: "🏠",
+      descricao: "A garantia de ter um teto seguro para a família.",
+    }
+  } else if (valorReais <= 1200) {
+    return {
+      item: "1 Salário Mínimo de Trabalho Duro",
+      emoji: "💸",
+      descricao: "Resultado de 30 dias de esforço de um trabalhador.",
+    }
+  } else {
+    return {
+      item: "Reserva de Emergência / Parcela de Veículo",
+      emoji: "🚗",
+      descricao: "Patrimônio e segurança financeira construídos a longo prazo.",
+    }
+  }
 }

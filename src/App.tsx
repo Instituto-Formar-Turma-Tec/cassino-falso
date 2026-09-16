@@ -2435,6 +2435,17 @@ export default function App() {
       }
       setUser(updatedUser)
       salvarUsuarioLocal(updatedUser)
+    } else {
+      const guestUser: UserAuth = {
+        id: "usr_guest_" + Date.now().toString().slice(-6),
+        nome: "Jogador Visitante",
+        matricula: "000000",
+        saldo_centavos: 100000 + addedCents,
+        total_perdido_centavos: 0,
+        rodadas_jogadas: 0,
+      }
+      setUser(guestUser)
+      salvarUsuarioLocal(guestUser)
     }
   }
 
