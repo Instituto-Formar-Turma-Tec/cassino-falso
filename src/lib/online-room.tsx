@@ -93,7 +93,17 @@ export function OnlineRoomProvider({
       .subscribe()
 
     subRef.current = ch
+    const refreshInterval = window.setInterval(async () => {
+      try {
+        const s = await api.estadoSala(codigo)
+        setEstado(s)
+      } catch {
+        /* a sala pode ter sido encerrada ou removida */
+      }
+    }, 1500)
+
     return () => {
+      window.clearInterval(refreshInterval)
       ch.unsubscribe()
     }
   }, [codigo])
@@ -103,7 +113,7 @@ export function OnlineRoomProvider({
       setLoading(true)
       setError(null)
       try {
-        const c = await api.criarSala(jogo, nome || user.nome, max)
+        const c = await api.criarSala(jogo, user.id, nome || user.nome, max)
         setCodigo(c)
         const s = await api.estadoSala(c)
         setEstado(s)
