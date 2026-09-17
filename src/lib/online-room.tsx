@@ -99,11 +99,11 @@ export function OnlineRoomProvider({
   }, [codigo])
 
   const criar = useCallback(
-    async (jogo: string, nome?: string) => {
+    async (jogo: string, nome?: string, max?: number) => {
       setLoading(true)
       setError(null)
       try {
-        const c = await api.criarSala(jogo, nome || user.nome)
+        const c = await api.criarSala(jogo, nome || user.nome, max)
         setCodigo(c)
         const s = await api.estadoSala(c)
         setEstado(s)

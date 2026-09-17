@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, lazy, Suspense } from "react"
 
 import { OnlineRoomProvider } from "@/lib/online-room"
-import OnlineGames from "@/components/OnlineGames"
 import AuthModal from "@/components/AuthModal"
 import DepositModal from "@/components/DepositModal"
 import StakeSelector, { StakeType } from "@/components/StakeSelector"
@@ -27,6 +26,9 @@ import {
   ANIMAIS_BICHO,
   SIMBOLOS_SLOT,
 } from "@/lib/game-engine"
+
+// Lazy-loaded heavy component
+const OnlineGames = lazy(() => import("@/components/OnlineGames"))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -468,8 +470,13 @@ function RouletteAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<number | null>(null)
   const [angle, setAngle] = useState(0)
+<<<<<<< HEAD
   const [betColor, setBetColor] = useState<"red" | "black">("red")
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
+=======
+  const [betColor, setBetColor] = useState<"red" | "black" | null>(null)
+  const animRef = useRef<number | null>(null)
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
   const spin = () => {
     if (spinning) return
@@ -480,13 +487,24 @@ function RouletteAnimation({ betAmountReais, onExecuteBet }: GameProps) {
     setResult(null)
     let a = angle
     let speed = 20
-    animRef.current = setInterval(() => {
-      a += speed
-      setAngle(a % 360)
-    }, 16)
+    let lastUpdate = 0
+    const animate = (timestamp: number) => {
+      if (timestamp - lastUpdate >= 32) {
+        a += speed
+        setAngle(a % 360)
+        lastUpdate = timestamp
+      }
+      animRef.current = requestAnimationFrame(animate)
+    }
+    animRef.current = requestAnimationFrame(animate)
     setTimeout(() => {
+<<<<<<< HEAD
       if (animRef.current) clearInterval(animRef.current)
       const num = (res.detalhesVisuais.numeroSorteado as number) ?? 17
+=======
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+      const num = NUMBERS[Math.floor(Math.random() * NUMBERS.length)]
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
       setResult(num)
       setAngle(a % 360)
       setSpinning(false)
@@ -826,7 +844,13 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   }, [isUserTurn, validActions.minRaiseTo, validActions.minBet, validActions.canRaise, validActions.canBet])
 
   // Process bot turns automatically with a small delay
+  const gameStateRef = useRef(gameState)
   useEffect(() => {
+    gameStateRef.current = gameState
+  }, [gameState])
+
+  useEffect(() => {
+<<<<<<< HEAD
     if (!gameState || gameState.isHandComplete) return
     if (
       gameState.currentTurnIndex < 0 ||
@@ -834,6 +858,9 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
     )
       return
 
+=======
+    if (gameState.isHandComplete) return
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
     const currentP = gameState.players[gameState.currentTurnIndex]
     if (!currentP) return
 
@@ -842,6 +869,7 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
       setIsProcessingBot(true)
       const timer = setTimeout(() => {
         try {
+<<<<<<< HEAD
           const botDecision = getBotAction(gameState, botId)
           setGameState((prev) =>
             processPlayerAction(
@@ -856,13 +884,21 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
           setGameState((prev) =>
             processPlayerAction(prev, botId, "fold"),
           )
+=======
+          const botDecision = getBotAction(gameStateRef.current, currentP.id)
+          setGameState((prev) =>
+            processPlayerAction(prev, currentP.id, botDecision.action, botDecision.amount),
+          )
+        } catch {
+          setGameState((prev) => processPlayerAction(prev, currentP.id, "fold"))
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
         } finally {
           setIsProcessingBot(false)
         }
       }, 900)
       return () => clearTimeout(timer)
     }
-  }, [gameState])
+  }, [gameState.currentTurnIndex, gameState.isHandComplete, gameState.players, currentP?.id])
 
   const handleUserAction = (action: ActionType, amount?: number) => {
     try {
@@ -1323,15 +1359,15 @@ function TigerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
 // ─── Floating gold coins bg ────────────────────────────────────────────────────
 
 function GoldParticles() {
-  const coins = Array.from({ length: 12 }, (_, i) => ({
+  const coins = Array.from({ length: 6 }, (_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 4}s`,
-    dur: `${3 + Math.random() * 4}s`,
-    size: `${10 + Math.random() * 16}px`,
+    dur: `${5 + Math.random() * 4}s`,
+    size: `${10 + Math.random() * 12}px`,
   }))
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" style={{ willChange: 'transform' }}>
       {coins.map((c) => (
         <div
           key={c.id}
@@ -1340,8 +1376,9 @@ function GoldParticles() {
             left: c.left,
             top: "-20px",
             fontSize: c.size,
-            opacity: 0.15,
+            opacity: 0.08,
             animation: `coinFall ${c.dur} ${c.delay} linear infinite`,
+            willChange: 'transform, opacity',
           }}
         >
           💰
@@ -1378,20 +1415,16 @@ function LiveTicker() {
   const items = [
     "🔴 CARLOS perdeu R$200 no caça-níquel",
     "🔴 ANA perdeu R$450 na roleta",
-    "🟡 PEDRO ganhou R$80 no blackjack — mas perdeu R$400 antes disso",
-    "🔴 MARIANA perdeu R$1.200 no jogo do bicho",
-    "🔴 ROBERTO perdeu R$600 nos dados",
-    "🟡 JULIA ganhou R$150 — e apostou tudo de volta",
-    "🔴 THIAGO perdeu mais R$320 tentando recuperar as perdas",
-    "🔴 CAMILA perdeu R$800 em uma noite",
-    "🟡 MARCOS ganhou R$90 — mas no total perdeu R$530",
+    "🟡 PEDRO ganhou R$80 no blackjack",
+    "🔴 MARIANA perdeu R$1.200 no bicho",
+    "🟡 JULIA ganhou R$150 — e apostou tudo",
   ]
   return (
     <div
       className="relative z-10 border-b border-yellow-900/40 py-1.5 ticker-wrap"
       style={{ background: "#0a0300" }}
     >
-      <div className="ticker-text font-display text-xs tracking-wider text-yellow-600">
+      <div className="ticker-text font-display text-xs tracking-wider text-yellow-600" style={{ willChange: 'transform' }}>
         {[...items, ...items].map((item, i) => (
           <span key={i} className="mx-8">
             {item}
@@ -1599,11 +1632,12 @@ function GameModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.95)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(0,0,0,0.92)" }}
       onClick={onClose}
     >
       <div
-        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 gold-border-anim flex flex-col overflow-y-auto"
+        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 flex flex-col overflow-y-auto"
+        style={{ border: "2px solid #d4a017" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header fixo no topo no mobile */}
@@ -1698,7 +1732,9 @@ function GameModal({
 
         {modo === "online" && isOnline ? (
           <OnlineRoomProvider key={game.id}>
-            <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
+            <Suspense fallback={<div className="text-center text-yellow-400 py-10 text-sm font-display">Carregando jogo...</div>}>
+              <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
+            </Suspense>
           </OnlineRoomProvider>
         ) : (
           <>
@@ -2082,9 +2118,23 @@ function ContaPanel({
 
 // ─── Perfil Panel ─────────────────────────────────────────────────────────────
 
+<<<<<<< HEAD
 function PerfilPanel({ user }: { user: UserAuth }) {
   const perdidoReais = user.total_perdido_centavos / 100
   const saldoReais = user.saldo_centavos / 100
+=======
+function PerfilPanel({ user }: { user: UserAuth | null }) {
+  const nome = user?.nome || "Jogador"
+  const iniciais = nome
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+  const apostaTotal = 755
+  const ganhoTotal = 235
+  const prejuizo = -(apostaTotal - ganhoTotal)
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
   return (
     <div>
@@ -2098,10 +2148,17 @@ function PerfilPanel({ user }: { user: UserAuth }) {
               color: "#050100",
             }}
           >
+<<<<<<< HEAD
             {user.nome.slice(0, 2).toUpperCase()}
           </div>
           <div className="font-display text-yellow-400 text-xl font-semibold">
             {user.nome}
+=======
+            {iniciais}
+          </div>
+          <div className="font-display text-yellow-400 text-xl font-semibold">
+            {nome}
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
           </div>
           <div className="text-yellow-800 text-sm font-display font-mono">
             Matrícula: {user.matricula}
@@ -2374,6 +2431,25 @@ function MobileBottomNav({
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
+function LossCounter() {
+  const [counter, setCounter] = useState(2847320)
+  useEffect(() => {
+    const id = setInterval(
+      () => setCounter((c) => c + Math.floor(Math.random() * 150 + 50)),
+      5000,
+    )
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <div className="hidden xl:block text-xs font-display">
+      <span className="text-yellow-800">Prejuízo acumulado hoje: </span>
+      <span className="text-red-400 font-bold">
+        R${counter.toLocaleString("pt-BR")}
+      </span>
+    </div>
+  )
+}
+
 function Header({
   user,
   onOpenAuth,
@@ -2389,15 +2465,6 @@ function Header({
   isLightMode: boolean
   onToggleLightMode: () => void
 }) {
-  const [counter, setCounter] = useState(2847320)
-  useEffect(() => {
-    const id = setInterval(
-      () => setCounter((c) => c + Math.floor(Math.random() * 150 + 50)),
-      2000,
-    )
-    return () => clearInterval(id)
-  }, [])
-
   return (
     <header
       className="relative z-10 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between border-b gap-2"
@@ -2424,12 +2491,7 @@ function Header({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <div className="hidden xl:block text-xs font-display">
-          <span className="text-yellow-800">Prejuízo acumulado hoje: </span>
-          <span className="text-red-400 font-bold">
-            R${counter.toLocaleString("pt-BR")}
-          </span>
-        </div>
+        <LossCounter />
 
         {/* Saldo Badge */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-950/60 border border-yellow-600/40 text-xs font-display">
@@ -2501,6 +2563,7 @@ function Header({
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>("jogos")
   const [selectedGame, setSelectedGame] = useState<GameInfo | null>(null)
+<<<<<<< HEAD
   const [user, setUser] = useState<UserAuth>(() => {
     const current = obterUsuarioAtual()
     if (current) return current
@@ -2530,6 +2593,10 @@ export default function App() {
       tipo: "derrota",
     },
   ])
+=======
+  const [user, setUser] = useState<UserAuth | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -2541,6 +2608,13 @@ export default function App() {
   const [isLightMode, setIsLightMode] = useState<boolean>(() => {
     return localStorage.getItem("cassino_light_mode") === "true"
   })
+
+  // Load user on mount
+  useEffect(() => {
+    const u = obterUsuarioAtual()
+    setUser(u)
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     if (isLightMode) {
@@ -2635,21 +2709,31 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0 transition-colors">
-      <GoldParticles />
-      <WarningBanner />
-      <LiveTicker />
-      <Header
-        user={user}
-        onOpenAuth={() => setShowAuthModal(true)}
-        onLogout={handleLogout}
-        onOpenDeposit={() => setShowDepositModal(true)}
-        isLightMode={isLightMode}
-        onToggleLightMode={() => setIsLightMode((prev) => !prev)}
-      />
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center bg-[#050100]">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-spin">🎰</div>
+            <div className="text-yellow-400 text-xl font-display">Carregando...</div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <GoldParticles />
+          <WarningBanner />
+          <LiveTicker />
+          <Header
+            user={user}
+            onOpenAuth={() => setShowAuthModal(true)}
+            onLogout={handleLogout}
+            onOpenDeposit={() => setShowDepositModal(true)}
+            isLightMode={isLightMode}
+            onToggleLightMode={() => setIsLightMode((prev) => !prev)}
+          />
 
-      <div className="flex flex-1 relative z-10">
-        <Sidebar active={activeNav} onNav={setActiveNav} />
+          <div className="flex flex-1 relative z-10">
+            <Sidebar active={activeNav} onNav={setActiveNav} />
 
+<<<<<<< HEAD
         <main
           className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
           style={{
@@ -2670,9 +2754,27 @@ export default function App() {
           {activeNav === "extrato" && <ExtratoPanel extrato={extrato} />}
         </main>
       </div>
+=======
+            <main
+              className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
+              style={{
+                background: isLightMode
+                  ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
+                  : "radial-gradient(ellipse at 20% 0%,#1a0800 0%,#080300 40%,#030100 100%)",
+              }}
+            >
+              {activeNav === "jogos" && <GamesPanel onPlay={setSelectedGame} />}
+              {activeNav === "conta" && <ContaPanel />}
+              {activeNav === "perfil" && <PerfilPanel user={user} />}
+              {activeNav === "ranking" && <RankingPanel />}
+              {activeNav === "extrato" && <ExtratoPanel />}
+            </main>
+          </div>
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
-      <MobileBottomNav active={activeNav} onNav={setActiveNav} />
+          <MobileBottomNav active={activeNav} onNav={setActiveNav} />
 
+<<<<<<< HEAD
       {selectedGame && (
         <GameModal
           game={selectedGame}
@@ -2680,28 +2782,34 @@ export default function App() {
           user={user}
           onExecuteBet={handleExecuteBet}
         />
+=======
+          {selectedGame && (
+            <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} />
+          )}
+
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            onSuccess={(loggedUser) => {
+              setUser(loggedUser)
+              setShowAuthModal(false)
+            }}
+          />
+
+          <DepositModal
+            isOpen={showDepositModal}
+            onClose={() => setShowDepositModal(false)}
+            onDeposit={handleDepositSuccess}
+          />
+
+          <WinImpactModal
+            isOpen={showWinModal}
+            prizeDescription={winDescription}
+            onClose={() => setShowWinModal(false)}
+          />
+        </>
+>>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
       )}
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={(loggedUser) => {
-          setUser(loggedUser)
-          setShowAuthModal(false)
-        }}
-      />
-
-      <DepositModal
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-        onDeposit={handleDepositSuccess}
-      />
-
-      <WinImpactModal
-        isOpen={showWinModal}
-        prizeDescription={winDescription}
-        onClose={() => setShowWinModal(false)}
-      />
     </div>
   )
 }
