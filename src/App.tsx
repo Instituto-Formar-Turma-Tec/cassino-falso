@@ -1991,7 +1991,18 @@ function ContaPanel() {
 
 // ─── Perfil Panel ─────────────────────────────────────────────────────────────
 
-function PerfilPanel() {
+function PerfilPanel({ user }: { user: UserAuth | null }) {
+  const nome = user?.nome || "Jogador"
+  const iniciais = nome
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+  const apostaTotal = 755
+  const ganhoTotal = 235
+  const prejuizo = -(apostaTotal - ganhoTotal)
+
   return (
     <div>
       <h2 className="font-casino text-5xl gold-shimmer mb-8">MEU PERFIL</h2>
@@ -2004,10 +2015,10 @@ function PerfilPanel() {
               color: "#050100",
             }}
           >
-            JO
+            {iniciais}
           </div>
           <div className="font-display text-yellow-400 text-xl font-semibold">
-            João Oliveira
+            {nome}
           </div>
           <div className="text-yellow-800 text-sm font-display">
             São Paulo, SP
@@ -2304,7 +2315,7 @@ function Header({
   useEffect(() => {
     const id = setInterval(
       () => setCounter((c) => c + Math.floor(Math.random() * 150 + 50)),
-      2000,
+      5000,
     )
     return () => clearInterval(id)
   }, [])
@@ -2400,7 +2411,8 @@ function Header({
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>("jogos")
   const [selectedGame, setSelectedGame] = useState<GameInfo | null>(null)
-  const [user, setUser] = useState<UserAuth | null>(() => obterUsuarioAtual())
+  const [user, setUser] = useState<UserAuth | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -2412,6 +2424,13 @@ export default function App() {
   const [isLightMode, setIsLightMode] = useState<boolean>(() => {
     return localStorage.getItem("cassino_light_mode") === "true"
   })
+
+  // Load user on mount
+  useEffect(() => {
+    const u = obterUsuarioAtual()
+    setUser(u)
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     if (isLightMode) {
@@ -2451,63 +2470,74 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0 transition-colors">
-      <GoldParticles />
-      <WarningBanner />
-      <LiveTicker />
-      <Header
-        user={user}
-        onOpenAuth={() => setShowAuthModal(true)}
-        onLogout={handleLogout}
-        onOpenDeposit={() => setShowDepositModal(true)}
-        isLightMode={isLightMode}
-        onToggleLightMode={() => setIsLightMode((prev) => !prev)}
-      />
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center bg-[#050100]">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-spin">🎰</div>
+            <div className="text-yellow-400 text-xl font-display">Carregando...</div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <GoldParticles />
+          <WarningBanner />
+          <LiveTicker />
+          <Header
+            user={user}
+            onOpenAuth={() => setShowAuthModal(true)}
+            onLogout={handleLogout}
+            onOpenDeposit={() => setShowDepositModal(true)}
+            isLightMode={isLightMode}
+            onToggleLightMode={() => setIsLightMode((prev) => !prev)}
+          />
 
-      <div className="flex flex-1 relative z-10">
-        <Sidebar active={activeNav} onNav={setActiveNav} />
+          <div className="flex flex-1 relative z-10">
+            <Sidebar active={activeNav} onNav={setActiveNav} />
 
-        <main
-          className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
-          style={{
-            background: isLightMode
-              ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
-              : "radial-gradient(ellipse at 20% 0%,#1a0800 0%,#080300 40%,#030100 100%)",
-          }}
-        >
-          {activeNav === "jogos" && <GamesPanel onPlay={setSelectedGame} />}
-          {activeNav === "conta" && <ContaPanel />}
-          {activeNav === "perfil" && <PerfilPanel />}
-          {activeNav === "ranking" && <RankingPanel />}
-          {activeNav === "extrato" && <ExtratoPanel />}
-        </main>
-      </div>
+            <main
+              className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
+              style={{
+                background: isLightMode
+                  ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
+                  : "radial-gradient(ellipse at 20% 0%,#1a0800 0%,#080300 40%,#030100 100%)",
+              }}
+            >
+              {activeNav === "jogos" && <GamesPanel onPlay={setSelectedGame} />}
+              {activeNav === "conta" && <ContaPanel />}
+              {activeNav === "perfil" && <PerfilPanel user={user} />}
+              {activeNav === "ranking" && <RankingPanel />}
+              {activeNav === "extrato" && <ExtratoPanel />}
+            </main>
+          </div>
 
-      <MobileBottomNav active={activeNav} onNav={setActiveNav} />
+          <MobileBottomNav active={activeNav} onNav={setActiveNav} />
 
-      {selectedGame && (
-        <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} />
+          {selectedGame && (
+            <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} />
+          )}
+
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            onSuccess={(loggedUser) => {
+              setUser(loggedUser)
+              setShowAuthModal(false)
+            }}
+          />
+
+          <DepositModal
+            isOpen={showDepositModal}
+            onClose={() => setShowDepositModal(false)}
+            onDeposit={handleDepositSuccess}
+          />
+
+          <WinImpactModal
+            isOpen={showWinModal}
+            prizeDescription={winDescription}
+            onClose={() => setShowWinModal(false)}
+          />
+        </>
       )}
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={(loggedUser) => {
-          setUser(loggedUser)
-          setShowAuthModal(false)
-        }}
-      />
-
-      <DepositModal
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-        onDeposit={handleDepositSuccess}
-      />
-
-      <WinImpactModal
-        isOpen={showWinModal}
-        prizeDescription={winDescription}
-        onClose={() => setShowWinModal(false)}
-      />
     </div>
   )
 }

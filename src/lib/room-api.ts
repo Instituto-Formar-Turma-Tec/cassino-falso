@@ -107,8 +107,8 @@ export async function finalizarPoker(
   })
 }
 
-export async function listarSalas(): Promise<any[]> {
-  return rpc<any[]>("listar_salas_turnos")
+export async function listarSalas(jogo?: string): Promise<any[]> {
+  return rpc<any[]>("listar_salas_turnos", jogo ? { p_jogo: jogo } : {})
 }
 
 export async function estadoSala(codigo: string): Promise<RoomEstado> {
