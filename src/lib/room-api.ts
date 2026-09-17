@@ -51,12 +51,14 @@ async function rpc<T = any>(
 
 export async function criarSala(
   jogo: string,
+  userId: string,
   nome: string,
   max?: number,
   aposta?: number,
 ): Promise<string> {
-  return rpc<string>("criar_sala_turnos", {
+  return rpc<string>("criar_sala_turnos_com_usuario", {
     p_jogo: jogo,
+    p_user_id: userId,
     p_nome: nome,
     p_max_jogadores: max ?? 6,
     p_aposta_centavos: aposta ?? 1000,
