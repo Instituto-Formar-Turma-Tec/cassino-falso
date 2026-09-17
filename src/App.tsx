@@ -16,8 +16,28 @@ import {
   PokerState,
   ActionType,
 } from "@/lib/poker-engine"
+import {
+  jogarSlot,
+  jogarBicho,
+  jogarDados,
+  jogarRoleta,
+  jogarBlackjack,
+  jogarPokerSimples,
+  ResultadoJogo,
+  ANIMAIS_BICHO,
+  SIMBOLOS_SLOT,
+} from "@/lib/game-engine"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface ExtratoItem {
+  data: string
+  jogo: string
+  apostado: number
+  resultado: number
+  tipo: "vitoria" | "derrota"
+}
+
 
 type NavItem = "jogos" | "conta" | "perfil" | "ranking" | "extrato"
 interface Testimonial {
@@ -237,23 +257,29 @@ const EXTRATO = [
 
 // ─── Animated game previews ────────────────────────────────────────────────────
 
-function SlotAnimation() {
-  const SYMBOLS = ["🍒", "💎", "🎰", "⭐", "🔔", "🍋", "🍊", "7️⃣"]
+interface GameProps {
+  betAmountReais: number
+  onExecuteBet: (nomeJogo: string, execFn: () => ResultadoJogo) => ResultadoJogo | null
+}
+
+function SlotAnimation({ betAmountReais, onExecuteBet }: GameProps) {
+  const SYMBOLS = SIMBOLOS_SLOT
   const [spinning, setSpinning] = useState(false)
-  const [reels, setReels] = useState(["🎰", "🎰", "🎰"])
+  const [reels, setReels] = useState<string[]>(["🎰", "🎰", "🎰"])
   const [won, setWon] = useState(false)
 
   const spin = () => {
     if (spinning) return
+    const res = onExecuteBet("Caça Níquel", () => jogarSlot(betAmountReais * 100))
+    if (!res) return
+
     setSpinning(true)
     setWon(false)
     setTimeout(() => {
-      const r = [0, 1, 2].map(
-        () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-      )
-      setReels(r)
+      const rolos = (res.detalhesVisuais.rolos as string[]) || ["7️⃣", "7️⃣", "7️⃣"]
+      setReels(rolos)
       setSpinning(false)
-      setWon(r[0] === r[1] && r[1] === r[2])
+      setWon(res.venceu)
     }, 2200)
   }
 
@@ -338,7 +364,7 @@ function SlotAnimation() {
           {/* win message */}
           {won && (
             <div className="text-center pb-2 font-casino text-xl neon-gold text-yellow-400 winner-flash">
-              🎉 JACKPOT!
+              🎉 JACKPOT (1/10)!
             </div>
           )}
           {/* lever / button */}
@@ -348,7 +374,7 @@ function SlotAnimation() {
               disabled={spinning}
               className="btn-gold w-full py-2 rounded-lg text-sm tracking-widest uppercase disabled:opacity-60"
             >
-              {spinning ? "Girando..." : "🎰 Girar"}
+              {spinning ? "Girando..." : `🎰 Girar (R$ ${betAmountReais.toFixed(2)})`}
             </button>
           </div>
         </div>
@@ -357,7 +383,7 @@ function SlotAnimation() {
   )
 }
 
-function DiceAnimation() {
+function DiceAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"]
   const [rolling, setRolling] = useState(false)
   const [dice, setDice] = useState([2, 4])
@@ -366,15 +392,18 @@ function DiceAnimation() {
 
   const roll = () => {
     if (rolling) return
+    const res = onExecuteBet("Dados", () => jogarDados(betAmountReais * 100))
+    if (!res) return
+
     setRolling(true)
     setResult(null)
     setTimeout(() => {
-      const d1 = Math.floor(Math.random() * 6)
-      const d2 = Math.floor(Math.random() * 6)
-      const t = d1 + d2 + 2
+      const d1 = (res.detalhesVisuais.dado1 as number) - 1 || 0
+      const d2 = (res.detalhesVisuais.dado2 as number) - 1 || 0
+      const t = (res.detalhesVisuais.soma as number) || d1 + d2 + 2
       setDice([d1, d2])
       setTotal(t)
-      setResult(t === 7 || t === 11 ? "win" : "loss")
+      setResult(res.venceu ? "win" : "loss")
       setRolling(false)
     }, 1300)
   }
@@ -422,13 +451,13 @@ function DiceAnimation() {
         disabled={rolling}
         className="btn-red px-6 py-2 rounded-lg text-sm tracking-widest uppercase disabled:opacity-60"
       >
-        {rolling ? "Rolando..." : "🎲 Jogar Dados"}
+        {rolling ? "Rolando..." : `🎲 Jogar Dados (R$ ${betAmountReais.toFixed(2)})`}
       </button>
     </div>
   )
 }
 
-function RouletteAnimation() {
+function RouletteAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const NUMBERS = [
     0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
     24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
@@ -439,11 +468,14 @@ function RouletteAnimation() {
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<number | null>(null)
   const [angle, setAngle] = useState(0)
-  const [betColor, setBetColor] = useState<"red" | "black" | null>(null)
+  const [betColor, setBetColor] = useState<"red" | "black">("red")
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const spin = () => {
     if (spinning) return
+    const res = onExecuteBet("Roleta", () => jogarRoleta(betAmountReais * 100, betColor))
+    if (!res) return
+
     setSpinning(true)
     setResult(null)
     let a = angle
@@ -453,8 +485,8 @@ function RouletteAnimation() {
       setAngle(a % 360)
     }, 16)
     setTimeout(() => {
-      clearInterval(animRef.current!)
-      const num = NUMBERS[Math.floor(Math.random() * NUMBERS.length)]
+      if (animRef.current) clearInterval(animRef.current)
+      const num = (res.detalhesVisuais.numeroSorteado as number) ?? 17
       setResult(num)
       setAngle(a % 360)
       setSpinning(false)
@@ -462,11 +494,7 @@ function RouletteAnimation() {
   }
 
   const isRed = (n: number) => RED.includes(n)
-  const won =
-    result !== null &&
-    betColor !== null &&
-    result !== 0 &&
-    (betColor === "red" ? isRed(result) : !isRed(result))
+  const won = result !== null && betColor !== null && result !== 0 && (betColor === "red" ? isRed(result) : !isRed(result))
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -583,13 +611,13 @@ function RouletteAnimation() {
         disabled={spinning}
         className="btn-gold px-8 py-2 rounded-lg text-sm tracking-widest uppercase disabled:opacity-60"
       >
-        {spinning ? "Girando..." : "🎡 Girar Roleta"}
+        {spinning ? "Girando..." : `🎡 Girar Roleta (R$ ${betAmountReais.toFixed(2)})`}
       </button>
     </div>
   )
 }
 
-function BlackjackAnimation() {
+function BlackjackAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   type Card = { suit: string; val: string; num: number }
   const SUITS = ["♠", "♥", "♦", "♣"]
   const VALUES = [
@@ -635,18 +663,18 @@ function BlackjackAnimation() {
   ])
   const [hidden, setHidden] = useState(true)
   const [phase, setPhase] = useState<"bet" | "play" | "result">("bet")
-  const [flipAnim, setFlipAnim] = useState(false)
 
   const deal = () => {
+    const res = onExecuteBet("Blackjack", () => jogarBlackjack(betAmountReais * 100))
+    if (!res) return
+
     setPlayerCards([makeCard(), makeCard()])
     setDealerCards([makeCard(), makeCard()])
     setHidden(true)
     setPhase("play")
-    setFlipAnim(false)
   }
   const hit = () => setPlayerCards((p) => [...p, makeCard()])
   const stand = () => {
-    setFlipAnim(true)
     setTimeout(() => {
       setHidden(false)
       setPhase("result")
@@ -753,7 +781,7 @@ function BlackjackAnimation() {
             onClick={deal}
             className="btn-gold px-6 py-2 rounded-lg text-xs tracking-widest uppercase"
           >
-            Nova Partida
+            Nova Partida (Apostar R$ {betAmountReais.toFixed(2)})
           </button>
         )}
       </div>
@@ -761,7 +789,7 @@ function BlackjackAnimation() {
   )
 }
 
-function PokerAnimation() {
+function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const initialPlayers = [
     { id: "user", name: "Você", chips: 1000, isBot: false },
     { id: "bot1", name: "Bot Carlos", chips: 1000, isBot: true },
@@ -799,18 +827,26 @@ function PokerAnimation() {
 
   // Process bot turns automatically with a small delay
   useEffect(() => {
-    if (gameState.isHandComplete) return
+    if (!gameState || gameState.isHandComplete) return
+    if (
+      gameState.currentTurnIndex < 0 ||
+      gameState.currentTurnIndex >= gameState.players.length
+    )
+      return
 
     const currentP = gameState.players[gameState.currentTurnIndex]
-    if (currentP && currentP.isBot && !currentP.folded && !currentP.isAllIn) {
+    if (!currentP) return
+
+    if (currentP.isBot && !currentP.folded && !currentP.isAllIn) {
+      const botId = currentP.id
       setIsProcessingBot(true)
       const timer = setTimeout(() => {
         try {
-          const botDecision = getBotAction(gameState, currentP.id)
+          const botDecision = getBotAction(gameState, botId)
           setGameState((prev) =>
             processPlayerAction(
               prev,
-              currentP.id,
+              botId,
               botDecision.action,
               botDecision.amount,
             ),
@@ -818,7 +854,7 @@ function PokerAnimation() {
         } catch {
           // Fallback fold if error
           setGameState((prev) =>
-            processPlayerAction(prev, currentP.id, "fold"),
+            processPlayerAction(prev, botId, "fold"),
           )
         } finally {
           setIsProcessingBot(false)
@@ -838,6 +874,9 @@ function PokerAnimation() {
   }
 
   const handleNextHand = () => {
+    const res = onExecuteBet("Pôquer", () => jogarPokerSimples(betAmountReais * 100))
+    if (!res) return
+
     const nextPlayers = gameState.players.map((p) => ({
       id: p.id,
       name: p.name,
@@ -1194,7 +1233,7 @@ function PokerAnimation() {
   )
 }
 
-function TigerAnimation() {
+function TigerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const [roaring, setRoaring] = useState(false)
   const ANIMALS = [
     "🐯",
@@ -1219,12 +1258,17 @@ function TigerAnimation() {
 
   const bet = (i: number) => {
     if (animating) return
+    const animalNome = ANIMAIS_BICHO[i % ANIMAIS_BICHO.length]
+    const res = onExecuteBet("Jogo do Bicho", () => jogarBicho(betAmountReais * 100, animalNome))
+    if (!res) return
+
     setChosen(i)
     setResult(null)
     setAnimating(true)
     setRoaring(true)
     setTimeout(() => {
-      setResult(Math.floor(Math.random() * ANIMALS.length))
+      const drawnAnimalIndex = res.venceu ? i : (i + 1) % ANIMALS.length
+      setResult(drawnAnimalIndex)
       setAnimating(false)
       setRoaring(false)
     }, 1500)
@@ -1519,7 +1563,7 @@ function HouseEdgeBar({ edge }: { edge: number }) {
 
 // ─── Game Modal with animation ─────────────────────────────────────────────────
 
-const GAME_ANIMATIONS: Record<string, React.FC> = {
+const GAME_ANIMATIONS: Record<string, React.FC<GameProps>> = {
   "caca-niquel": SlotAnimation,
   "jogo-bicho": TigerAnimation,
   dados: DiceAnimation,
@@ -1535,10 +1579,21 @@ const GAME_TO_ONLINE: Record<string, "bicho" | "blackjack" | "poker"> = {
   poker: "poker",
 }
 
-function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
+function GameModal({
+  game,
+  onClose,
+  user,
+  onExecuteBet,
+}: {
+  game: GameInfo
+  onClose: () => void
+  user: UserAuth
+  onExecuteBet: (nomeJogo: string, execFn: () => ResultadoJogo) => ResultadoJogo | null
+}) {
   const Animation = GAME_ANIMATIONS[game.id]
   const [modo, setModo] = useState<"local" | "online">("local")
   const [selectedStake, setSelectedStake] = useState<StakeType>("dinheiro")
+  const [betAmountReais, setBetAmountReais] = useState<number>(10)
   const isOnline = ONLINE_GAMES.has(game.id)
 
   return (
@@ -1582,6 +1637,40 @@ function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
           />
         </div>
 
+        {/* Seletor de Aposta Fictícia */}
+        <div className="mb-4 bg-yellow-950/40 border border-yellow-700/40 p-3 rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-display text-yellow-500 uppercase tracking-wider font-semibold">
+              💵 Valor da Aposta Fictícia
+            </span>
+            <span className="text-xs text-yellow-300 font-mono font-bold">
+              R$ {betAmountReais.toFixed(2)}
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            {[5, 10, 20, 50, 100].map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setBetAmountReais(val)}
+                className={`flex-1 py-1.5 rounded-lg border text-xs font-display font-semibold transition-all ${
+                  betAmountReais === val
+                    ? "btn-gold border-yellow-400 text-black font-bold"
+                    : "border-gray-800 bg-gray-900/60 text-gray-300 hover:border-yellow-700"
+                }`}
+              >
+                R${val}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-between items-center text-[10px] text-yellow-700 font-display">
+            <span>🎲 Taxa de Vitória Educacional: <strong>1 em 10 (10%)</strong></span>
+            <span>Saldo: R$ {(user.saldo_centavos / 100).toFixed(2)}</span>
+          </div>
+        </div>
+
         {isOnline && (
           <div className="flex gap-2 mb-4">
             <button
@@ -1618,7 +1707,12 @@ function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
               className="rounded-xl p-5 mb-5"
               style={{ background: "#080200", border: "1px solid #2a1000" }}
             >
-              {Animation && <Animation />}
+              {Animation && (
+                <Animation
+                  betAmountReais={betAmountReais}
+                  onExecuteBet={onExecuteBet}
+                />
+              )}
             </div>
 
             {/* house edge */}
@@ -1897,42 +1991,52 @@ function TestimonialsSection() {
 
 // ─── Conta Panel ──────────────────────────────────────────────────────────────
 
-function ContaPanel() {
+function ContaPanel({
+  user,
+  onOpenDeposit,
+}: {
+  user: UserAuth
+  onOpenDeposit: () => void
+}) {
+  const saldoReais = user.saldo_centavos / 100
+  const perdidoReais = user.total_perdido_centavos / 100
+
   return (
     <div>
       <h2 className="font-casino text-5xl gold-shimmer mb-8">CONTA BANCÁRIA</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="game-card rounded-2xl p-6">
           <div className="text-xs text-yellow-800 font-display tracking-widest uppercase mb-2">
-            Saldo Atual
+            Saldo Atual Fictício
           </div>
-          <div className="font-casino text-6xl text-red-400 neon-red">
-            -R$150
+          <div
+            className={`font-casino text-5xl ${
+              saldoReais >= 0 ? "text-emerald-400" : "text-red-400 neon-red"
+            }`}
+          >
+            R$ {saldoReais.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-yellow-800 mt-2 font-display">
-            Você está no vermelho. A casa agradece.
+            {saldoReais >= 0
+              ? "Aproveite para testar a matemática das apostas."
+              : "Você está no vermelho. A casa agradece."}
           </div>
 
           <div className="mt-6 space-y-3">
             {[
               {
-                label: "Total Depositado",
-                val: "R$450,00",
+                label: "Rodadas Jogadas",
+                val: user.rodadas_jogadas.toString(),
                 color: "text-yellow-400",
               },
               {
-                label: "Total Ganho",
-                val: "R$300,00",
-                color: "text-green-400",
+                label: "Total Perdido em Apostas",
+                val: `R$ ${perdidoReais.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                color: "text-red-400",
               },
               {
-                label: "Bônus Recebido",
-                val: "R$50,00",
-                color: "text-yellow-600",
-              },
-              {
-                label: "Lucro da Casa com você",
-                val: "R$150,00",
+                label: "Lucro Estimado da Casa",
+                val: `R$ ${perdidoReais.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
                 color: "text-red-400",
               },
             ].map((item, i) => (
@@ -1954,35 +2058,22 @@ function ContaPanel() {
           </div>
         </div>
 
-        <div className="game-card rounded-2xl p-6">
-          <div className="text-xs text-yellow-700 font-display tracking-widest uppercase mb-4">
-            Depositar
+        <div className="game-card rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div className="text-xs text-yellow-700 font-display tracking-widest uppercase mb-4">
+              Recarregar Fichas Fictícias
+            </div>
+            <p className="text-xs text-yellow-300 font-display leading-relaxed mb-4">
+              Adicione mais dinheiro de simulação para continuar seus testes pedagógicos de probabilidade e estatística.
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {[20, 50, 100, 200, 500, 1000].map((v) => (
-              <button
-                key={v}
-                className="btn-red py-2 rounded-xl text-sm font-bold"
-              >
-                R${v}
-              </button>
-            ))}
-          </div>
-          <input
-            type="number"
-            placeholder="Valor personalizado (R$)"
-            className="casino-input w-full px-4 py-3 rounded-xl text-sm mb-4 font-display"
-          />
-          <button className="btn-gold w-full py-3 rounded-xl text-sm tracking-widest uppercase">
-            Depositar Agora 💰
-          </button>
-          <div
-            className="mt-4 p-3 rounded-xl border border-red-900/40 text-xs text-red-400 font-display leading-relaxed"
-            style={{ background: "#0f0000" }}
+
+          <button
+            onClick={onOpenDeposit}
+            className="btn-gold w-full py-3.5 rounded-xl text-sm tracking-widest uppercase font-bold shadow-xl"
           >
-            ⚠️ Dinheiro depositado raramente volta. Média de recuperação: 66%.
-            Você dificilmente será a exceção.
-          </div>
+            Depositar Fichas 💰
+          </button>
         </div>
       </div>
     </div>
@@ -1991,7 +2082,10 @@ function ContaPanel() {
 
 // ─── Perfil Panel ─────────────────────────────────────────────────────────────
 
-function PerfilPanel() {
+function PerfilPanel({ user }: { user: UserAuth }) {
+  const perdidoReais = user.total_perdido_centavos / 100
+  const saldoReais = user.saldo_centavos / 100
+
   return (
     <div>
       <h2 className="font-casino text-5xl gold-shimmer mb-8">MEU PERFIL</h2>
@@ -2004,13 +2098,13 @@ function PerfilPanel() {
               color: "#050100",
             }}
           >
-            JO
+            {user.nome.slice(0, 2).toUpperCase()}
           </div>
           <div className="font-display text-yellow-400 text-xl font-semibold">
-            João Oliveira
+            {user.nome}
           </div>
-          <div className="text-yellow-800 text-sm font-display">
-            São Paulo, SP
+          <div className="text-yellow-800 text-sm font-display font-mono">
+            Matrícula: {user.matricula}
           </div>
           <div
             className="mt-3 px-3 py-1 rounded-full inline-block text-xs font-display tracking-widest uppercase"
@@ -2020,38 +2114,37 @@ function PerfilPanel() {
               border: "1px solid #3a1800",
             }}
           >
-            Nível Ouro 🏅
-          </div>
-          <div
-            className="mt-5 p-3 rounded-xl border border-red-900/40 text-xs text-red-400 font-display leading-relaxed"
-            style={{ background: "#0f0000" }}
-          >
-            Você está neste site há <strong>7 meses</strong>.<br />
-            Considerou parar alguma vez?
+            Simulação Educacional 🏅
           </div>
         </div>
 
         <div className="md:col-span-2 space-y-5">
           <div className="game-card rounded-2xl p-5">
             <div className="font-display text-yellow-700 text-xs tracking-widest uppercase mb-3">
-              Estatísticas de Jogo
+              Estatísticas da Conta
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  label: "Partidas Jogadas",
-                  val: "1.247",
+                  label: "Saldo Fictício",
+                  val: `R$ ${saldoReais.toFixed(2)}`,
+                  color: saldoReais >= 0 ? "text-emerald-400" : "text-red-400",
+                },
+                {
+                  label: "Total Perdido",
+                  val: `R$ ${perdidoReais.toFixed(2)}`,
+                  color: "text-red-400",
+                },
+                {
+                  label: "Rodadas Jogadas",
+                  val: user.rodadas_jogadas.toString(),
                   color: "text-yellow-400",
                 },
                 {
-                  label: "Horas Jogadas",
-                  val: "342h",
-                  color: "text-yellow-400",
+                  label: "Taxa de Vitória",
+                  val: "1 / 10 (10%)",
+                  color: "text-yellow-500",
                 },
-                { label: "Maior Ganho", val: "R$320", color: "text-green-400" },
-                { label: "Maior Perda", val: "R$200", color: "text-red-400" },
-                { label: "Ranking", val: "#7", color: "text-yellow-500" },
-                { label: "Pontos", val: "4.820", color: "text-yellow-400" },
               ].map((s, i) => (
                 <div
                   key={i}
@@ -2064,35 +2157,6 @@ function PerfilPanel() {
                   <div className={`font-casino text-2xl mt-0.5 ${s.color}`}>
                     {s.val}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="game-card rounded-2xl p-5 border border-red-900/50">
-            <div className="font-display text-red-400 text-xs tracking-widest uppercase mb-3">
-              ⚠️ Padrões Preocupantes
-            </div>
-            <div className="space-y-2.5">
-              {[
-                "Você jogou às 3h da manhã em 14 dos últimos 30 dias",
-                "Seu tempo de jogo aumentou 60% no último mês",
-                "Você já depositou 4x esta semana",
-                "Sua maior perda foi logo após um grande ganho",
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex gap-2 text-sm text-yellow-200/60 font-display"
-                >
-                  <span className="text-red-500 flex-shrink-0">•</span>
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: item.replace(
-                        /(\d+[hx%]|\d+h|\d+ dos|\d+%)/,
-                        '<strong class="text-red-400">$&</strong>',
-                      ),
-                    }}
-                  />
                 </div>
               ))}
             </div>
@@ -2185,7 +2249,14 @@ function RankingPanel() {
 
 // ─── Extrato Panel ────────────────────────────────────────────────────────────
 
-function ExtratoPanel() {
+function ExtratoPanel({ extrato }: { extrato: ExtratoItem[] }) {
+  const totalApostado = extrato.reduce((acc, e) => acc + e.apostado, 0)
+  const totalGanho = extrato.reduce(
+    (acc, e) => acc + (e.tipo === "vitoria" ? e.resultado + e.apostado : 0),
+    0
+  )
+  const prejuizo = extrato.reduce((acc, e) => acc + e.resultado, 0)
+
   return (
     <div>
       <h2 className="font-casino text-5xl gold-shimmer mb-8">
@@ -2201,39 +2272,57 @@ function ExtratoPanel() {
           <div className="text-right">Apostado</div>
           <div className="text-right">Resultado</div>
         </div>
-        {EXTRATO.map((e, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-4 gap-3 px-6 py-4 border-b items-center"
-            style={{ borderColor: "#1a0800" }}
-          >
-            <div className="text-xs text-yellow-900 font-display">{e.data}</div>
-            <div className="font-display text-yellow-500 text-sm">{e.jogo}</div>
-            <div className="text-right font-display text-yellow-600 text-sm">
-              R${e.apostado}
-            </div>
-            <div
-              className={`text-right font-display text-sm font-bold ${
-                e.tipo === "vitoria" ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              {e.tipo === "vitoria" ? "+" : ""}R${Math.abs(e.resultado)}
-            </div>
+        {extrato.length === 0 ? (
+          <div className="p-8 text-center text-xs text-yellow-800 font-display">
+            Nenhuma aposta realizada ainda. Abra um jogo para começar!
           </div>
-        ))}
+        ) : (
+          extrato.map((e, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-4 gap-3 px-6 py-4 border-b items-center"
+              style={{ borderColor: "#1a0800" }}
+            >
+              <div className="text-xs text-yellow-900 font-display">{e.data}</div>
+              <div className="font-display text-yellow-500 text-sm">{e.jogo}</div>
+              <div className="text-right font-display text-yellow-600 text-sm">
+                R$ {e.apostado.toFixed(2)}
+              </div>
+              <div
+                className={`text-right font-display text-sm font-bold ${
+                  e.tipo === "vitoria" ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {e.resultado >= 0 ? "+" : ""}R$ {e.resultado.toFixed(2)}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total Apostado", val: "R$755", color: "text-yellow-400" },
-          { label: "Total Ganho", val: "R$235", color: "text-green-400" },
-          { label: "Prejuízo", val: "-R$520", color: "text-red-400" },
+          {
+            label: "Total Apostado",
+            val: `R$ ${totalApostado.toFixed(2)}`,
+            color: "text-yellow-400",
+          },
+          {
+            label: "Total Ganho",
+            val: `R$ ${totalGanho.toFixed(2)}`,
+            color: "text-green-400",
+          },
+          {
+            label: "Prejuízo Líquido",
+            val: `R$ ${prejuizo.toFixed(2)}`,
+            color: prejuizo >= 0 ? "text-green-400" : "text-red-400",
+          },
         ].map((s, i) => (
           <div key={i} className="game-card rounded-2xl p-5 text-center">
             <div className="text-xs text-yellow-800 font-display uppercase tracking-wider">
               {s.label}
             </div>
-            <div className={`font-casino text-3xl mt-1 ${s.color}`}>
+            <div className={`font-casino text-2xl mt-1 ${s.color}`}>
               {s.val}
             </div>
           </div>
@@ -2293,7 +2382,7 @@ function Header({
   isLightMode,
   onToggleLightMode,
 }: {
-  user: UserAuth | null
+  user: UserAuth
   onOpenAuth: () => void
   onLogout: () => void
   onOpenDeposit: () => void
@@ -2339,6 +2428,18 @@ function Header({
           <span className="text-yellow-800">Prejuízo acumulado hoje: </span>
           <span className="text-red-400 font-bold">
             R${counter.toLocaleString("pt-BR")}
+          </span>
+        </div>
+
+        {/* Saldo Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-950/60 border border-yellow-600/40 text-xs font-display">
+          <span className="text-yellow-600 font-semibold">Saldo:</span>
+          <span
+            className={`font-bold font-mono ${
+              user.saldo_centavos >= 0 ? "text-yellow-300" : "text-red-400"
+            }`}
+          >
+            R$ {(user.saldo_centavos / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </span>
         </div>
 
@@ -2400,7 +2501,35 @@ function Header({
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>("jogos")
   const [selectedGame, setSelectedGame] = useState<GameInfo | null>(null)
-  const [user, setUser] = useState<UserAuth | null>(() => obterUsuarioAtual())
+  const [user, setUser] = useState<UserAuth>(() => {
+    const current = obterUsuarioAtual()
+    if (current) return current
+    const guestUser: UserAuth = {
+      id: "usr_guest_" + Date.now().toString().slice(-6),
+      nome: "Jogador Visitante",
+      matricula: "000000",
+      saldo_centavos: 100000,
+      total_perdido_centavos: 0,
+      rodadas_jogadas: 0,
+    }
+    salvarUsuarioLocal(guestUser)
+    return guestUser
+  })
+
+  const [extrato, setExtrato] = useState<ExtratoItem[]>([
+    {
+      data: new Date().toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      jogo: "Caça Níquel",
+      apostado: 10,
+      resultado: -10,
+      tipo: "derrota",
+    },
+  ])
 
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -2424,29 +2553,84 @@ export default function App() {
 
   const handleLogout = () => {
     logoutUsuario()
-    setUser(null)
+    const guestUser: UserAuth = {
+      id: "usr_guest_" + Date.now().toString().slice(-6),
+      nome: "Jogador Visitante",
+      matricula: "000000",
+      saldo_centavos: 100000,
+      total_perdido_centavos: 0,
+      rodadas_jogadas: 0,
+    }
+    setUser(guestUser)
+    salvarUsuarioLocal(guestUser)
   }
 
   const handleDepositSuccess = (addedCents: number) => {
-    if (user) {
-      const updatedUser: UserAuth = {
-        ...user,
-        saldo_centavos: user.saldo_centavos + addedCents,
-      }
-      setUser(updatedUser)
-      salvarUsuarioLocal(updatedUser)
-    } else {
-      const guestUser: UserAuth = {
-        id: "usr_guest_" + Date.now().toString().slice(-6),
-        nome: "Jogador Visitante",
-        matricula: "000000",
-        saldo_centavos: 100000 + addedCents,
-        total_perdido_centavos: 0,
-        rodadas_jogadas: 0,
-      }
-      setUser(guestUser)
-      salvarUsuarioLocal(guestUser)
+    const updatedUser: UserAuth = {
+      ...user,
+      saldo_centavos: user.saldo_centavos + addedCents,
     }
+    setUser(updatedUser)
+    salvarUsuarioLocal(updatedUser)
+  }
+
+  const handleExecuteBet = (
+    nomeJogo: string,
+    execFn: () => ResultadoJogo
+  ): ResultadoJogo | null => {
+    const res = execFn()
+    const apostaCentavos =
+      res.saldoDelta < 0
+        ? Math.abs(res.saldoDelta)
+        : Math.round(res.saldoDelta / (res.multiplicador - 1 || 1))
+
+    if (user.saldo_centavos < apostaCentavos) {
+      alert("Saldo fictício insuficiente! Faça um depósito fictício para continuar jogando.")
+      setShowDepositModal(true)
+      return null
+    }
+
+    const novoSaldo = user.saldo_centavos + res.saldoDelta
+    const novoPerdido =
+      user.total_perdido_centavos + (res.saldoDelta < 0 ? Math.abs(res.saldoDelta) : 0)
+    const novasRodadas = user.rodadas_jogadas + 1
+
+    const updatedUser: UserAuth = {
+      ...user,
+      saldo_centavos: novoSaldo,
+      total_perdido_centavos: novoPerdido,
+      rodadas_jogadas: novasRodadas,
+    }
+
+    setUser(updatedUser)
+    salvarUsuarioLocal(updatedUser)
+
+    const horaFormatada = new Date().toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+
+    const apostaReais = apostaCentavos / 100
+    const novoItemExtrato: ExtratoItem = {
+      data: horaFormatada,
+      jogo: nomeJogo,
+      apostado: apostaReais,
+      resultado: res.saldoDelta / 100,
+      tipo: res.venceu ? "vitoria" : "derrota",
+    }
+
+    setExtrato((prev) => [novoItemExtrato, ...prev])
+
+    if (res.venceu) {
+      setWinDescription(
+        `Você ganhou R$ ${(res.saldoDelta / 100).toFixed(2)} (${res.multiplicador}x)! Mas lembre-se: a taxa de vitória educacional é de apenas 1/10 (10%). No longo prazo, a casa sempre ganha!`
+      )
+      setShowWinModal(true)
+    }
+
+    return res
   }
 
   return (
@@ -2475,17 +2659,27 @@ export default function App() {
           }}
         >
           {activeNav === "jogos" && <GamesPanel onPlay={setSelectedGame} />}
-          {activeNav === "conta" && <ContaPanel />}
-          {activeNav === "perfil" && <PerfilPanel />}
+          {activeNav === "conta" && (
+            <ContaPanel
+              user={user}
+              onOpenDeposit={() => setShowDepositModal(true)}
+            />
+          )}
+          {activeNav === "perfil" && <PerfilPanel user={user} />}
           {activeNav === "ranking" && <RankingPanel />}
-          {activeNav === "extrato" && <ExtratoPanel />}
+          {activeNav === "extrato" && <ExtratoPanel extrato={extrato} />}
         </main>
       </div>
 
       <MobileBottomNav active={activeNav} onNav={setActiveNav} />
 
       {selectedGame && (
-        <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} />
+        <GameModal
+          game={selectedGame}
+          onClose={() => setSelectedGame(null)}
+          user={user}
+          onExecuteBet={handleExecuteBet}
+        />
       )}
 
       <AuthModal
