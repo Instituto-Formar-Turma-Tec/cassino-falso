@@ -1337,20 +1337,16 @@ function LiveTicker() {
   const items = [
     "🔴 CARLOS perdeu R$200 no caça-níquel",
     "🔴 ANA perdeu R$450 na roleta",
-    "🟡 PEDRO ganhou R$80 no blackjack — mas perdeu R$400 antes disso",
-    "🔴 MARIANA perdeu R$1.200 no jogo do bicho",
-    "🔴 ROBERTO perdeu R$600 nos dados",
-    "🟡 JULIA ganhou R$150 — e apostou tudo de volta",
-    "🔴 THIAGO perdeu mais R$320 tentando recuperar as perdas",
-    "🔴 CAMILA perdeu R$800 em uma noite",
-    "🟡 MARCOS ganhou R$90 — mas no total perdeu R$530",
+    "🟡 PEDRO ganhou R$80 no blackjack",
+    "🔴 MARIANA perdeu R$1.200 no bicho",
+    "🟡 JULIA ganhou R$150 — e apostou tudo",
   ]
   return (
     <div
       className="relative z-10 border-b border-yellow-900/40 py-1.5 ticker-wrap"
       style={{ background: "#0a0300" }}
     >
-      <div className="ticker-text font-display text-xs tracking-wider text-yellow-600">
+      <div className="ticker-text font-display text-xs tracking-wider text-yellow-600" style={{ willChange: 'transform' }}>
         {[...items, ...items].map((item, i) => (
           <span key={i} className="mx-8">
             {item}
