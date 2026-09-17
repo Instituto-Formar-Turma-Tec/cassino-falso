@@ -1,4 +1,4 @@
-import { defineConfig, type HtmlTagDescriptor, type Plugin } from "vite"
+import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from "vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import path from "node:path"
@@ -9,6 +9,7 @@ import siteConfiguration from "./.figma/make/site.json"
 export default defineConfig(({ mode }) => {
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === "development"
+  const env = loadEnv(mode, process.cwd(), ["NEXT_PUBLIC_", "VITE_"])
 
   return {
     base: process.env.FIGMA_PUBLIC_URL
@@ -18,6 +19,14 @@ export default defineConfig(({ mode }) => {
     // Vite only exposes vars matching envPrefix — without this, Supabase config
     // would be undefined in the browser.
     envPrefix: ["NEXT_PUBLIC_", "VITE_"],
+    define: {
+      "import.meta.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_URL,
+      ),
+      "import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      ),
+    },
     build: {
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
