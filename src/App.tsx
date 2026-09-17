@@ -1608,12 +1608,12 @@ function GameModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.92)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
       <div
-        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 flex flex-col overflow-y-auto"
+        className="game-card w-full max-w-3xl rounded-2xl p-4 sm:p-6 flex flex-col max-h-[90vh] overflow-y-auto shadow-2xl my-auto"
         style={{ border: "2px solid #d4a017" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -2682,7 +2682,7 @@ export default function App() {
         <Sidebar active={activeNav} onNav={setActiveNav} />
 
         <main
-          className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
+          className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-y-auto"
           style={{
             background: isLightMode
               ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
