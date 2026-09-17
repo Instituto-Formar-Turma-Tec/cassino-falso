@@ -1608,21 +1608,21 @@ function GameModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-      style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(6px)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden"
+      style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       <div
-        className="game-card w-full max-w-3xl rounded-2xl p-4 sm:p-6 flex flex-col max-h-[90vh] overflow-y-auto shadow-2xl my-auto"
-        style={{ border: "2px solid #d4a017" }}
+        className="game-card w-full max-w-3xl h-[90vh] max-h-[850px] rounded-2xl flex flex-col overflow-hidden shadow-2xl border-2 border-yellow-500/80 bg-neutral-950"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header fixo no topo no mobile */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-yellow-800/40 sticky top-0 bg-gray-950/95 backdrop-blur-md z-20 -mx-4 px-4 sm:mx-0 sm:px-0">
+        {/* Barra Superior da Janela (Header Fixo) */}
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-yellow-800/40 bg-gray-950 z-20">
           <div className="flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">🗔</span>
             <span className="text-2xl sm:text-3xl">{game.emoji}</span>
             <div>
-              <h2 className="font-casino text-2xl sm:text-3xl neon-gold text-yellow-400 tracking-wider">
+              <h2 className="font-casino text-2xl sm:text-3xl neon-gold text-yellow-400 tracking-wider leading-tight">
                 {game.nome}
               </h2>
               <p className="text-yellow-700 text-[11px] sm:text-xs font-display line-clamp-1">
@@ -1633,134 +1633,137 @@ function GameModal({
           <button
             onClick={onClose}
             className="btn-red px-3 py-1.5 rounded-xl text-xs tracking-wider uppercase font-bold flex items-center gap-1 shadow-md hover:scale-105 transition-transform"
-            title="Fechar Jogo"
+            title="Fechar Janela do Jogo"
           >
             <span>✕</span>
-            <span className="hidden sm:inline">Fechar</span>
+            <span className="hidden sm:inline font-display">Fechar</span>
           </button>
         </div>
 
-        {/* Stake Selector (O que está em jogo) */}
-        <div className="mb-4">
-          <StakeSelector
-            selectedStake={selectedStake}
-            onSelectStake={setSelectedStake}
-          />
-        </div>
-
-        {/* Seletor de Aposta Fictícia */}
-        <div className="mb-4 bg-yellow-950/40 border border-yellow-700/40 p-3 rounded-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-display text-yellow-500 uppercase tracking-wider font-semibold">
-              💵 Valor da Aposta Fictícia
-            </span>
-            <span className="text-xs text-yellow-300 font-mono font-bold">
-              R$ {betAmountReais.toFixed(2)}
-            </span>
+        {/* Corpo da Janela com Scroll Dedicado */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar min-h-0">
+          {/* Stake Selector (O que está em jogo) */}
+          <div>
+            <StakeSelector
+              selectedStake={selectedStake}
+              onSelectStake={setSelectedStake}
+            />
           </div>
 
-          <div className="flex gap-2">
-            {[5, 10, 20, 50, 100].map((val) => (
+          {/* Seletor de Aposta Fictícia */}
+          <div className="bg-yellow-950/40 border border-yellow-700/40 p-3 rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-display text-yellow-500 uppercase tracking-wider font-semibold">
+                💵 Valor da Aposta Fictícia
+              </span>
+              <span className="text-xs text-yellow-300 font-mono font-bold">
+                R$ {betAmountReais.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex gap-2">
+              {[5, 10, 20, 50, 100].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setBetAmountReais(val)}
+                  className={`flex-1 py-1.5 rounded-lg border text-xs font-display font-semibold transition-all ${
+                    betAmountReais === val
+                      ? "btn-gold border-yellow-400 text-black font-bold"
+                      : "border-gray-800 bg-gray-900/60 text-gray-300 hover:border-yellow-700"
+                  }`}
+                >
+                  R${val}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] text-yellow-700 font-display">
+              <span>🎲 Taxa de Vitória Educacional: <strong>1 em 10 (10%)</strong></span>
+              <span>Saldo: R$ {(user.saldo_centavos / 100).toFixed(2)}</span>
+            </div>
+          </div>
+
+          {isOnline && (
+            <div className="flex gap-2 mb-2">
               <button
-                key={val}
-                type="button"
-                onClick={() => setBetAmountReais(val)}
-                className={`flex-1 py-1.5 rounded-lg border text-xs font-display font-semibold transition-all ${
-                  betAmountReais === val
-                    ? "btn-gold border-yellow-400 text-black font-bold"
-                    : "border-gray-800 bg-gray-900/60 text-gray-300 hover:border-yellow-700"
+                onClick={() => setModo("local")}
+                className={`flex-1 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all font-display ${
+                  modo === "local"
+                    ? "btn-gold"
+                    : "border border-gray-800 text-yellow-800 hover:text-yellow-500"
                 }`}
               >
-                R${val}
+                Local
               </button>
-            ))}
-          </div>
-
-          <div className="flex justify-between items-center text-[10px] text-yellow-700 font-display">
-            <span>🎲 Taxa de Vitória Educacional: <strong>1 em 10 (10%)</strong></span>
-            <span>Saldo: R$ {(user.saldo_centavos / 100).toFixed(2)}</span>
-          </div>
-        </div>
-
-        {isOnline && (
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setModo("local")}
-              className={`flex-1 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all font-display ${
-                modo === "local"
-                  ? "btn-gold"
-                  : "border border-gray-800 text-yellow-800 hover:text-yellow-500"
-              }`}
-            >
-              Local
-            </button>
-            <button
-              onClick={() => setModo("online")}
-              className={`flex-1 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all font-display ${
-                modo === "online"
-                  ? "btn-green"
-                  : "border border-gray-800 text-yellow-800 hover:text-yellow-500"
-              }`}
-            >
-              🌐 Online por Turnos
-            </button>
-          </div>
-        )}
-
-        {modo === "online" && isOnline ? (
-          <OnlineRoomProvider key={game.id}>
-            <Suspense fallback={<div className="text-center text-yellow-400 py-10 text-sm font-display">Carregando jogo...</div>}>
-              <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
-            </Suspense>
-          </OnlineRoomProvider>
-        ) : (
-          <>
-            {/* animation */}
-            <div
-              className="rounded-xl p-5 mb-5"
-              style={{ background: "#080200", border: "1px solid #2a1000" }}
-            >
-              {Animation && (
-                <Animation
-                  betAmountReais={betAmountReais}
-                  onExecuteBet={onExecuteBet}
-                />
-              )}
+              <button
+                onClick={() => setModo("online")}
+                className={`flex-1 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all font-display ${
+                  modo === "online"
+                    ? "btn-green"
+                    : "border border-gray-800 text-yellow-800 hover:text-yellow-500"
+                }`}
+              >
+                🌐 Online por Turnos
+              </button>
             </div>
+          )}
 
-            {/* house edge */}
-            <div
-              className="p-4 rounded-xl mb-4"
-              style={{ background: "#0f0000", border: "1px solid #5a0000" }}
-            >
-              <div className="text-center">
-                <div className="text-xs text-red-500 font-display tracking-widest uppercase">
-                  Vantagem da Casa
-                </div>
-                <div className="font-casino text-5xl text-red-400 neon-red my-1">
-                  {game.vantagemCasa}%
-                </div>
-                <div className="text-xs text-yellow-800 font-display">
-                  A cada R$100 apostados, a casa retém R$
-                  {game.vantagemCasa.toFixed(2)} em média.
-                </div>
+          {modo === "online" && isOnline ? (
+            <OnlineRoomProvider key={game.id}>
+              <Suspense fallback={<div className="text-center text-yellow-400 py-10 text-sm font-display">Carregando jogo...</div>}>
+                <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
+              </Suspense>
+            </OnlineRoomProvider>
+          ) : (
+            <>
+              {/* animation */}
+              <div
+                className="rounded-xl p-5"
+                style={{ background: "#080200", border: "1px solid #2a1000" }}
+              >
+                {Animation && (
+                  <Animation
+                    betAmountReais={betAmountReais}
+                    onExecuteBet={onExecuteBet}
+                  />
+                )}
               </div>
-              <HouseEdgeBar edge={game.vantagemCasa} />
-            </div>
 
-            <div className="text-center text-xs text-yellow-800 font-display mb-3">
-              Conecte sua lógica de backend aqui. O design e animações estão
-              prontos.
-            </div>
+              {/* house edge */}
+              <div
+                className="p-4 rounded-xl"
+                style={{ background: "#0f0000", border: "1px solid #5a0000" }}
+              >
+                <div className="text-center">
+                  <div className="text-xs text-red-500 font-display tracking-widest uppercase">
+                    Vantagem da Casa
+                  </div>
+                  <div className="font-casino text-5xl text-red-400 neon-red my-1">
+                    {game.vantagemCasa}%
+                  </div>
+                  <div className="text-xs text-yellow-800 font-display">
+                    A cada R$100 apostados, a casa retém R$
+                    {game.vantagemCasa.toFixed(2)} em média.
+                  </div>
+                </div>
+                <HouseEdgeBar edge={game.vantagemCasa} />
+              </div>
 
-            <button
-              onClick={onClose}
-              className="btn-gold w-full py-3 rounded-xl text-sm tracking-widest uppercase"
-            >
-              Fechar
-            </button>
-          </>
-        )}
+              <div className="text-center text-xs text-yellow-800 font-display">
+                Conecte sua lógica de backend aqui. O design e animações estão
+                prontos.
+              </div>
+
+              <button
+                onClick={onClose}
+                className="btn-gold w-full py-3 rounded-xl text-sm tracking-widest uppercase"
+              >
+                Fechar Janela
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -2665,7 +2668,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 md:pb-0 transition-colors">
+    <div className="h-screen flex flex-col overflow-hidden pb-16 md:pb-0 transition-colors">
       <GoldParticles />
       <WarningBanner />
       <LiveTicker />
@@ -2678,11 +2681,11 @@ export default function App() {
         onToggleLightMode={() => setIsLightMode((prev) => !prev)}
       />
 
-      <div className="flex flex-1 relative z-10">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative z-10">
         <Sidebar active={activeNav} onNav={setActiveNav} />
 
         <main
-          className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-y-auto"
+          className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar"
           style={{
             background: isLightMode
               ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
