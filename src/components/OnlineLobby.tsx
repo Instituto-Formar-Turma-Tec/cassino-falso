@@ -14,11 +14,12 @@ export default function OnlineLobby({ jogo }: Props) {
 
   useEffect(() => {
     refresh()
-  }, [])
+  }, [jogo])
 
   async function refresh() {
     try {
-      setSalas(await listarSalas())
+      const salas = await listarSalas(jogo)
+      setSalas(salas.filter((s) => s.jogo === jogo))
     } catch {
       /* ok */
     }
@@ -26,7 +27,7 @@ export default function OnlineLobby({ jogo }: Props) {
 
   async function handleCriar() {
     try {
-      const cod = await criar(jogo, nomeJogador)
+      const cod = await criar(jogo, nomeJogador, maxJogadores)
       setMsg("Sala criada! Código: " + cod)
     } catch {
       /* error is in context */
