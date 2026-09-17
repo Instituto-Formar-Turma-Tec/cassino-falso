@@ -442,7 +442,7 @@ function RouletteAnimation() {
   const [result, setResult] = useState<number | null>(null)
   const [angle, setAngle] = useState(0)
   const [betColor, setBetColor] = useState<"red" | "black" | null>(null)
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const animRef = useRef<number | null>(null)
 
   const spin = () => {
     if (spinning) return
@@ -450,12 +450,18 @@ function RouletteAnimation() {
     setResult(null)
     let a = angle
     let speed = 20
-    animRef.current = setInterval(() => {
-      a += speed
-      setAngle(a % 360)
-    }, 16)
+    let lastUpdate = 0
+    const animate = (timestamp: number) => {
+      if (timestamp - lastUpdate >= 32) {
+        a += speed
+        setAngle(a % 360)
+        lastUpdate = timestamp
+      }
+      animRef.current = requestAnimationFrame(animate)
+    }
+    animRef.current = requestAnimationFrame(animate)
     setTimeout(() => {
-      clearInterval(animRef.current!)
+      if (animRef.current) cancelAnimationFrame(animRef.current)
       const num = NUMBERS[Math.floor(Math.random() * NUMBERS.length)]
       setResult(num)
       setAngle(a % 360)
@@ -800,35 +806,31 @@ function PokerAnimation() {
   }, [isUserTurn, validActions.minRaiseTo, validActions.minBet, validActions.canRaise, validActions.canBet])
 
   // Process bot turns automatically with a small delay
+  const gameStateRef = useRef(gameState)
+  useEffect(() => {
+    gameStateRef.current = gameState
+  }, [gameState])
+
   useEffect(() => {
     if (gameState.isHandComplete) return
-
     const currentP = gameState.players[gameState.currentTurnIndex]
     if (currentP && currentP.isBot && !currentP.folded && !currentP.isAllIn) {
       setIsProcessingBot(true)
       const timer = setTimeout(() => {
         try {
-          const botDecision = getBotAction(gameState, currentP.id)
+          const botDecision = getBotAction(gameStateRef.current, currentP.id)
           setGameState((prev) =>
-            processPlayerAction(
-              prev,
-              currentP.id,
-              botDecision.action,
-              botDecision.amount,
-            ),
+            processPlayerAction(prev, currentP.id, botDecision.action, botDecision.amount),
           )
         } catch {
-          // Fallback fold if error
-          setGameState((prev) =>
-            processPlayerAction(prev, currentP.id, "fold"),
-          )
+          setGameState((prev) => processPlayerAction(prev, currentP.id, "fold"))
         } finally {
           setIsProcessingBot(false)
         }
       }, 900)
       return () => clearTimeout(timer)
     }
-  }, [gameState])
+  }, [gameState.currentTurnIndex, gameState.isHandComplete, gameState.players, currentP?.id])
 
   const handleUserAction = (action: ActionType, amount?: number) => {
     try {
@@ -1543,11 +1545,12 @@ function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.95)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(0,0,0,0.92)" }}
       onClick={onClose}
     >
       <div
-        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 gold-border-anim flex flex-col overflow-y-auto"
+        className="game-card w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-2xl rounded-none p-4 sm:p-6 flex flex-col overflow-y-auto"
+        style={{ border: "2px solid #d4a017" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header fixo no topo no mobile */}
@@ -2297,6 +2300,25 @@ function MobileBottomNav({
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
+function LossCounter() {
+  const [counter, setCounter] = useState(2847320)
+  useEffect(() => {
+    const id = setInterval(
+      () => setCounter((c) => c + Math.floor(Math.random() * 150 + 50)),
+      5000,
+    )
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <div className="hidden xl:block text-xs font-display">
+      <span className="text-yellow-800">Prejuízo acumulado hoje: </span>
+      <span className="text-red-400 font-bold">
+        R${counter.toLocaleString("pt-BR")}
+      </span>
+    </div>
+  )
+}
+
 function Header({
   user,
   onOpenAuth,
@@ -2312,15 +2334,6 @@ function Header({
   isLightMode: boolean
   onToggleLightMode: () => void
 }) {
-  const [counter, setCounter] = useState(2847320)
-  useEffect(() => {
-    const id = setInterval(
-      () => setCounter((c) => c + Math.floor(Math.random() * 150 + 50)),
-      5000,
-    )
-    return () => clearInterval(id)
-  }, [])
-
   return (
     <header
       className="relative z-10 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between border-b gap-2"
@@ -2347,12 +2360,7 @@ function Header({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <div className="hidden xl:block text-xs font-display">
-          <span className="text-yellow-800">Prejuízo acumulado hoje: </span>
-          <span className="text-red-400 font-bold">
-            R${counter.toLocaleString("pt-BR")}
-          </span>
-        </div>
+        <LossCounter />
 
         {/* Light / Dark Mode Toggle */}
         <button
