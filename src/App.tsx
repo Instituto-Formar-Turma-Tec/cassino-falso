@@ -470,13 +470,8 @@ function RouletteAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<number | null>(null)
   const [angle, setAngle] = useState(0)
-<<<<<<< HEAD
   const [betColor, setBetColor] = useState<"red" | "black">("red")
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
-=======
-  const [betColor, setBetColor] = useState<"red" | "black" | null>(null)
   const animRef = useRef<number | null>(null)
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
   const spin = () => {
     if (spinning) return
@@ -498,13 +493,8 @@ function RouletteAnimation({ betAmountReais, onExecuteBet }: GameProps) {
     }
     animRef.current = requestAnimationFrame(animate)
     setTimeout(() => {
-<<<<<<< HEAD
-      if (animRef.current) clearInterval(animRef.current)
-      const num = (res.detalhesVisuais.numeroSorteado as number) ?? 17
-=======
       if (animRef.current) cancelAnimationFrame(animRef.current)
-      const num = NUMBERS[Math.floor(Math.random() * NUMBERS.length)]
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
+      const num = (res.detalhesVisuais.numeroSorteado as number) ?? 17
       setResult(num)
       setAngle(a % 360)
       setSpinning(false)
@@ -850,7 +840,6 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
   }, [gameState])
 
   useEffect(() => {
-<<<<<<< HEAD
     if (!gameState || gameState.isHandComplete) return
     if (
       gameState.currentTurnIndex < 0 ||
@@ -858,9 +847,6 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
     )
       return
 
-=======
-    if (gameState.isHandComplete) return
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
     const currentP = gameState.players[gameState.currentTurnIndex]
     if (!currentP) return
 
@@ -869,8 +855,7 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
       setIsProcessingBot(true)
       const timer = setTimeout(() => {
         try {
-<<<<<<< HEAD
-          const botDecision = getBotAction(gameState, botId)
+          const botDecision = getBotAction(gameStateRef.current, botId)
           setGameState((prev) =>
             processPlayerAction(
               prev,
@@ -884,21 +869,13 @@ function PokerAnimation({ betAmountReais, onExecuteBet }: GameProps) {
           setGameState((prev) =>
             processPlayerAction(prev, botId, "fold"),
           )
-=======
-          const botDecision = getBotAction(gameStateRef.current, currentP.id)
-          setGameState((prev) =>
-            processPlayerAction(prev, currentP.id, botDecision.action, botDecision.amount),
-          )
-        } catch {
-          setGameState((prev) => processPlayerAction(prev, currentP.id, "fold"))
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
         } finally {
           setIsProcessingBot(false)
         }
       }, 900)
       return () => clearTimeout(timer)
     }
-  }, [gameState.currentTurnIndex, gameState.isHandComplete, gameState.players, currentP?.id])
+  }, [gameState.currentTurnIndex, gameState.isHandComplete, gameState.players])
 
   const handleUserAction = (action: ActionType, amount?: number) => {
     try {
@@ -2118,23 +2095,16 @@ function ContaPanel({
 
 // ─── Perfil Panel ─────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
 function PerfilPanel({ user }: { user: UserAuth }) {
-  const perdidoReais = user.total_perdido_centavos / 100
-  const saldoReais = user.saldo_centavos / 100
-=======
-function PerfilPanel({ user }: { user: UserAuth | null }) {
-  const nome = user?.nome || "Jogador"
+  const nome = user.nome || "Jogador Visitante"
   const iniciais = nome
     .split(" ")
     .map((p) => p[0])
     .join("")
     .slice(0, 2)
     .toUpperCase()
-  const apostaTotal = 755
-  const ganhoTotal = 235
-  const prejuizo = -(apostaTotal - ganhoTotal)
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
+  const perdidoReais = user.total_perdido_centavos / 100
+  const saldoReais = user.saldo_centavos / 100
 
   return (
     <div>
@@ -2148,17 +2118,10 @@ function PerfilPanel({ user }: { user: UserAuth | null }) {
               color: "#050100",
             }}
           >
-<<<<<<< HEAD
-            {user.nome.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="font-display text-yellow-400 text-xl font-semibold">
-            {user.nome}
-=======
             {iniciais}
           </div>
           <div className="font-display text-yellow-400 text-xl font-semibold">
             {nome}
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
           </div>
           <div className="text-yellow-800 text-sm font-display font-mono">
             Matrícula: {user.matricula}
@@ -2563,7 +2526,6 @@ function Header({
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>("jogos")
   const [selectedGame, setSelectedGame] = useState<GameInfo | null>(null)
-<<<<<<< HEAD
   const [user, setUser] = useState<UserAuth>(() => {
     const current = obterUsuarioAtual()
     if (current) return current
@@ -2593,10 +2555,6 @@ export default function App() {
       tipo: "derrota",
     },
   ])
-=======
-  const [user, setUser] = useState<UserAuth | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -2612,8 +2570,7 @@ export default function App() {
   // Load user on mount
   useEffect(() => {
     const u = obterUsuarioAtual()
-    setUser(u)
-    setIsLoading(false)
+    if (u) setUser(u)
   }, [])
 
   useEffect(() => {
@@ -2709,31 +2666,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0 transition-colors">
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center bg-[#050100]">
-          <div className="text-center">
-            <div className="text-6xl mb-4 animate-spin">🎰</div>
-            <div className="text-yellow-400 text-xl font-display">Carregando...</div>
-          </div>
-        </div>
-      ) : (
-        <>
-          <GoldParticles />
-          <WarningBanner />
-          <LiveTicker />
-          <Header
-            user={user}
-            onOpenAuth={() => setShowAuthModal(true)}
-            onLogout={handleLogout}
-            onOpenDeposit={() => setShowDepositModal(true)}
-            isLightMode={isLightMode}
-            onToggleLightMode={() => setIsLightMode((prev) => !prev)}
-          />
+      <GoldParticles />
+      <WarningBanner />
+      <LiveTicker />
+      <Header
+        user={user}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
+        onOpenDeposit={() => setShowDepositModal(true)}
+        isLightMode={isLightMode}
+        onToggleLightMode={() => setIsLightMode((prev) => !prev)}
+      />
 
-          <div className="flex flex-1 relative z-10">
-            <Sidebar active={activeNav} onNav={setActiveNav} />
+      <div className="flex flex-1 relative z-10">
+        <Sidebar active={activeNav} onNav={setActiveNav} />
 
-<<<<<<< HEAD
         <main
           className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
           style={{
@@ -2754,27 +2701,9 @@ export default function App() {
           {activeNav === "extrato" && <ExtratoPanel extrato={extrato} />}
         </main>
       </div>
-=======
-            <main
-              className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
-              style={{
-                background: isLightMode
-                  ? "radial-gradient(ellipse at 20% 0%,#ffffff 0%,#f1f5f9 40%,#e2e8f0 100%)"
-                  : "radial-gradient(ellipse at 20% 0%,#1a0800 0%,#080300 40%,#030100 100%)",
-              }}
-            >
-              {activeNav === "jogos" && <GamesPanel onPlay={setSelectedGame} />}
-              {activeNav === "conta" && <ContaPanel />}
-              {activeNav === "perfil" && <PerfilPanel user={user} />}
-              {activeNav === "ranking" && <RankingPanel />}
-              {activeNav === "extrato" && <ExtratoPanel />}
-            </main>
-          </div>
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
 
-          <MobileBottomNav active={activeNav} onNav={setActiveNav} />
+      <MobileBottomNav active={activeNav} onNav={setActiveNav} />
 
-<<<<<<< HEAD
       {selectedGame && (
         <GameModal
           game={selectedGame}
@@ -2782,34 +2711,28 @@ export default function App() {
           user={user}
           onExecuteBet={handleExecuteBet}
         />
-=======
-          {selectedGame && (
-            <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} />
-          )}
-
-          <AuthModal
-            isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
-            onSuccess={(loggedUser) => {
-              setUser(loggedUser)
-              setShowAuthModal(false)
-            }}
-          />
-
-          <DepositModal
-            isOpen={showDepositModal}
-            onClose={() => setShowDepositModal(false)}
-            onDeposit={handleDepositSuccess}
-          />
-
-          <WinImpactModal
-            isOpen={showWinModal}
-            prizeDescription={winDescription}
-            onClose={() => setShowWinModal(false)}
-          />
-        </>
->>>>>>> c058a95a8c47261915ca6b3aa35c88775e58e5b7
       )}
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(loggedUser) => {
+          setUser(loggedUser)
+          setShowAuthModal(false)
+        }}
+      />
+
+      <DepositModal
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+        onDeposit={handleDepositSuccess}
+      />
+
+      <WinImpactModal
+        isOpen={showWinModal}
+        prizeDescription={winDescription}
+        onClose={() => setShowWinModal(false)}
+      />
     </div>
   )
 }

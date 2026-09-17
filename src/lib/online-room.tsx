@@ -17,7 +17,7 @@ interface OnlineRoomCtx {
   loading: boolean
   error: string | null
 
-  criar: (jogo: string, nome?: string) => Promise<string>
+  criar: (jogo: string, nome?: string, max?: number) => Promise<string>
   entrar: (codigo: string) => Promise<void>
   iniciar: () => Promise<void>
   acao: (acao: any) => Promise<void>
