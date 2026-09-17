@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, lazy, Suspense } from "react"
 
 import { OnlineRoomProvider } from "@/lib/online-room"
-import OnlineGames from "@/components/OnlineGames"
 import AuthModal from "@/components/AuthModal"
 import DepositModal from "@/components/DepositModal"
 import StakeSelector, { StakeType } from "@/components/StakeSelector"
@@ -16,6 +15,9 @@ import {
   PokerState,
   ActionType,
 } from "@/lib/poker-engine"
+
+// Lazy-loaded heavy component
+const OnlineGames = lazy(() => import("@/components/OnlineGames"))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1279,15 +1281,15 @@ function TigerAnimation() {
 // ─── Floating gold coins bg ────────────────────────────────────────────────────
 
 function GoldParticles() {
-  const coins = Array.from({ length: 12 }, (_, i) => ({
+  const coins = Array.from({ length: 6 }, (_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 4}s`,
-    dur: `${3 + Math.random() * 4}s`,
-    size: `${10 + Math.random() * 16}px`,
+    dur: `${5 + Math.random() * 4}s`,
+    size: `${10 + Math.random() * 12}px`,
   }))
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" style={{ willChange: 'transform' }}>
       {coins.map((c) => (
         <div
           key={c.id}
@@ -1296,8 +1298,9 @@ function GoldParticles() {
             left: c.left,
             top: "-20px",
             fontSize: c.size,
-            opacity: 0.15,
+            opacity: 0.08,
             animation: `coinFall ${c.dur} ${c.delay} linear infinite`,
+            willChange: 'transform, opacity',
           }}
         >
           💰
@@ -1609,7 +1612,9 @@ function GameModal({ game, onClose }: { game: GameInfo; onClose: () => void }) {
 
         {modo === "online" && isOnline ? (
           <OnlineRoomProvider key={game.id}>
-            <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
+            <Suspense fallback={<div className="text-center text-yellow-400 py-10 text-sm font-display">Carregando jogo...</div>}>
+              <OnlineGames jogo={GAME_TO_ONLINE[game.id]} />
+            </Suspense>
           </OnlineRoomProvider>
         ) : (
           <>
